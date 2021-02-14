@@ -11,12 +11,6 @@
 
 #define PORT 8888
 
-// struct clients
-//  {  
-//     int id;
-//     int ip;
-// }cl;
-
 char members[100][25];
 int sel;
 int client_index[100]; // array to store names of clients
@@ -40,32 +34,38 @@ void *connection_handler(void *socket_desc)
 
     int read_size;
     char *message , client_message[2000];
-
+    if(ntohl(sel) == 1){
     //Receive a message from client
     while( (read_size =recv(cl_id , client_message , 2000 , 0)) > 0 )
     {
-        if(ntohl(sel) == 1){ //Send message to  all remaining clients in group 
-	        printf("%s\n",client_message);       
-	        for(i=0;i<n;i++){
-	            if(client_index[i] != cl_id){ // to send message all the remaining client
-        	        send( client_index[i], client_message , sizeof(client_message),0);	
-	            }
+        //Send message to  all remaining clients in group 
+	    printf("%s\n",client_message);       
+	    for(i=0;i<n;i++){
+	        if(client_index[i] != cl_id){ // to send message all the remaining client
+                send(client_index[i], client_message , sizeof(client_message),0);	
 	        }
-	        for(int i=0;i<2000;i++){
-	            client_message[i]=0;}
+	    }
+	    for(int i=0;i<2000;i++){
+	        client_message[i]=0;}
         }
+    }    
 
-        else { // send message to a single person
-            printf("%s\n",client_message);  
-            recv(cl_id ,send_name,sizeof(send_name),0);
-            for(i=0;i<member_count;i++){
-                if(members[i] == send_name){
-	                if(cl_id == client_index[i]){ // to send message to particlualr client
-        	            send(cl_id, client_message , sizeof(client_message),0);}	
-	            }
+    else { // send message to a single person
+        recv(cl_id ,send_name,sizeof(send_name),0);
+        printf("%s\n",send_name);
+        while( (read_size =recv(cl_id , client_message , 2000 , 0)) > 0 )
+        {   
+        printf("%s\n",client_message);  
+        for(i=0;i<member_count;i++){
+            printf("%d\n",i);
+            if(strcmp(members[i],send_name)==0){
+                printf("names matching\n");
+	            cl_id = client_index[i]; // to send message to particlualr client
+        	    send(cl_id, client_message , sizeof(client_message),0);	
 	        }
-            for(int i=0;i<2000;i++){
-	            client_message[i]=0;}
+	    }
+        for(int i=0;i<2000;i++){
+	        client_message[i]=0;}
         } 
     }        
   
