@@ -69,17 +69,15 @@ int main(int argc, char const *argv[])
    
     if(atoi(argv[4]) == 0){
         printf("enter name to send direct message\n");
-        scanf("%s",send_name);}
-
-    printf("%s\n",send_name);
+        scanf("%s",send_name);
+        printf("%s\n",send_name);}
 
     send(sock ,&sel, sizeof(sel),0);
     send(sock ,name, sizeof(name),0);
 
     if( atoi(argv[4]) == 0)
     {   
-        send(sock ,send_name, sizeof(send_name),0);
-        
+        send(sock ,send_name, sizeof(send_name),0);    
     }
 
 	signal(SIGINT, sigintHandler); 
