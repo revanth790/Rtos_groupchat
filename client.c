@@ -11,7 +11,6 @@
 #include <pthread.h>
 #include <signal.h>
 
-
 void sigintHandler(int sig_num) 
 { 
     printf("exit(Y/N)");
@@ -20,10 +19,10 @@ void sigintHandler(int sig_num)
 
 void *recvmg(void *sock)
 {
-	int their_sock = *((int *)sock);
+	int rcv_sock = *((int *)sock);
 	char msg[500];
 	int len;
-	while((len = recv(their_sock,msg,500,0)) > 0) {
+	while((len = recv(rcv_sock,msg,500,0)) > 0) {
 		printf("%s\n",msg);
 		for(int i=0;i<500;i++)
 		{
@@ -59,7 +58,7 @@ int main(int argc, char const *argv[])
 		return -1; 
 	}
     else
-	    printf("connected"); // added else
+	    printf("connected");
 
     char name[25],send_name[25];
     strcpy(name,argv[3]);
@@ -69,17 +68,18 @@ int main(int argc, char const *argv[])
     printf("%d\n",ntohl(sel));
    
     if(atoi(argv[4]) == 0){
-        printf("enter name to send direct message");
+        printf("enter name to send direct message\n");
         scanf("%s",send_name);}
 
-    send(sock ,&sel, sizeof(sel),0);
-    send(sock ,name, sizeof(name) , 0 );
+    printf("%s\n",send_name);
 
-    if( argv[4] == 0)
+    send(sock ,&sel, sizeof(sel),0);
+    send(sock ,name, sizeof(name),0);
+
+    if( atoi(argv[4]) == 0)
     {   
-        printf("Hi\n");
-        send(sock ,send_name, sizeof(send_name) , 0 );
-        printf("%s\n",send_name);
+        send(sock ,send_name, sizeof(send_name),0);
+        
     }
 
 	signal(SIGINT, sigintHandler); 
