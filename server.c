@@ -21,7 +21,7 @@ void *connection_handler(void *socket_desc)
     int i,j;
     int cl_id = *(int*)socket_desc; //client socket descriptor
     char name[25],send_name[25];
-
+    int sendcl_id;
     recv(cl_id ,&sel,sizeof(sel),0);
     //printf("%d\n",sel);
 
@@ -60,8 +60,8 @@ void *connection_handler(void *socket_desc)
             printf("%d\n",i);
             if(strcmp(members[i],send_name)==0){
                 printf("names matching\n");
-	            cl_id = client_index[i]; // to send message to particlualr client
-        	    send(cl_id, client_message , sizeof(client_message),0);	
+	            sendcl_id = client_index[i]; // to send message to particlualr client
+        	    send(sendcl_id, client_message , sizeof(client_message),0);	
 	        }
 	    }
         for(int i=0;i<2000;i++){
@@ -83,7 +83,7 @@ void *connection_handler(void *socket_desc)
 			}
 		}
 	}
-	n--;
+	member_count--;
     }
     else if(read_size == -1)
     {
