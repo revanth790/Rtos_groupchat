@@ -118,7 +118,7 @@ if (setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,&opt, sizeof
 
     bind(socket_desc, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
    
-    listen(socket_desc, 150); 
+    listen(socket_desc, 50); 
     
     while((client_sock = accept(socket_desc, (struct sockaddr *)&client,  
                        (socklen_t*)&addrlen)))
