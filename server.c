@@ -13,6 +13,7 @@
 
 char members[100][25];
 int sel;
+int msgtype;
 int client_index[100]; // array to store names of clients
 int n=0,member_count=0;
 void *connection_handler(void *socket_desc)
@@ -22,52 +23,46 @@ void *connection_handler(void *socket_desc)
     int cl_id = *(int*)socket_desc; //client socket descriptor
     char name[25],send_name[25];
     int sendcl_id;
-    recv(cl_id ,&sel,sizeof(sel),0);
-    //printf("%d\n",sel);
 
     recv(cl_id ,name,sizeof(name),0);
     strcpy(members[member_count++],name);
-    printf("%d\n",member_count);
-
+    //printf("%d\n",member_count);
 	client_index[n]=cl_id;  
 	n++;
 
-    int read_size;
-    char *message , client_message[2000];
-    if(ntohl(sel) == 1){
-    //Receive a message from client
-    while( (read_size =recv(cl_id , client_message , 2000 , 0)) > 0 )
-    {
-        //Send message to  all remaining clients in group 
-	    printf("%s\n",client_message);       
-	    for(i=0;i<n;i++){
-	        if(client_index[i] != cl_id){ // to send message all the remaining client
-                send(client_index[i], client_message , sizeof(client_message),0);	
+    int read_size =0;
+    char client_message[2000];
+    while((read_size =recv(cl_id , client_message ,sizeof(client_message), 0))>0){ //Receive a message from client
+        
+        recv(cl_id ,&sel,sizeof(sel),0);
+        //printf("%d\n",ntohl(sel));
+        if(ntohl(sel) == 1){
+            msgtype = htonl(1);
+            //Send message to  all remaining clients in group 
+	        printf("%s\n",client_message);       
+	        for(i=0;i<n;i++){
+	            if(client_index[i] != cl_id){ // to send message all the remaining client
+                    send(client_index[i], client_message , sizeof(client_message),0);	
+                    send(client_index[i],&msgtype,sizeof(msgtype),0);
+                    send(client_index[i], name , sizeof(name),0);	
+	            }
 	        }
-	    }
-	    for(int i=0;i<2000;i++){
-	        client_message[i]=0;}
-        }
-    }    
-
-    else { // send message to a single person
-        recv(cl_id ,send_name,sizeof(send_name),0);
-        printf("%s\n",send_name);
-        while( (read_size =recv(cl_id , client_message , 2000 , 0)) > 0 )
-        {   
-        printf("%s\n",client_message);  
-        for(i=0;i<member_count;i++){
-            printf("%d\n",i);
-            if(strcmp(members[i],send_name)==0){
-                printf("names matching\n");
-	            sendcl_id = client_index[i]; // to send message to particlualr client
-        	    send(sendcl_id, client_message , sizeof(client_message),0);	
+        }       
+        else { // send message to a single person
+            msgtype = htonl(0);
+            recv(cl_id ,send_name,sizeof(send_name),0);
+            //printf("%s\n",send_name);
+            for(i=0;i<member_count;i++){
+                if(strcmp(members[i],send_name)==0){
+                    //printf("%s\n",members[i]);
+	                sendcl_id = client_index[i]; // to send message to particlualr client
+                    send(sendcl_id, client_message , sizeof(client_message),0);	
+                    send(client_index[i],&msgtype,sizeof(msgtype),0);
+                    send(sendcl_id, name , sizeof(name),0);    
+	            }
 	        }
-	    }
-        for(int i=0;i<2000;i++){
-	        client_message[i]=0;}
         } 
-    }        
+    }           
   
    if(read_size == 0)
     {
@@ -107,7 +102,7 @@ int main(int argc, char *argv[])
     }
 	
     puts("Socket created");
-if (setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,&opt, sizeof(opt))){
+    if (setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,&opt, sizeof(opt))){
 		perror("setsockopt");
 		exit(EXIT_FAILURE);
 	}
@@ -118,7 +113,7 @@ if (setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,&opt, sizeof
 
     bind(socket_desc, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
    
-    listen(socket_desc, 50); 
+    listen(socket_desc, 150); 
     
     while((client_sock = accept(socket_desc, (struct sockaddr *)&client,  
                        (socklen_t*)&addrlen)))
