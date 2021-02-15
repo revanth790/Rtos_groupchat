@@ -20,14 +20,18 @@ void sigintHandler(int sig_num)
 void *recvmg(void *sock)
 {
 	int rcv_sock = *((int *)sock);
-	char msg[500];
+	char msg[2000],put_msg[2000];
+    int msgtype;
 	int len;
-	while((len = recv(rcv_sock,msg,500,0)) > 0) {
-		printf("%s\n",msg);
-		for(int i=0;i<500;i++)
-		{
-	  	  msg[i]=0;	
-		} 
+	while((len = recv(rcv_sock,msg,sizeof(msg),0))>0) {
+        strcpy(put_msg,msg);
+        recv(rcv_sock,&msgtype,sizeof(msgtype),0);
+        recv(rcv_sock,msg,sizeof(msg),0);
+        if( ntohl(msgtype) == 1){
+            printf("%s: %s\n",msg,put_msg);}
+        else {
+            printf("direct message from %s: %s\n", msg, put_msg);
+        }
 	}
 }
 
@@ -36,7 +40,7 @@ int main(int argc, char const *argv[])
 	int sock = 0;
 	pthread_t sendt,recvt;
 	struct sockaddr_in serv_addr; 
-	char msg[500];  
+	char msg[2000] ={0};  
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
 	{ 
 		printf("\n Socket creation error \n"); 
@@ -62,36 +66,30 @@ int main(int argc, char const *argv[])
 
     char name[25],send_name[25];
     strcpy(name,argv[3]);
-    printf("%s\n",name);
-    
-    int sel = htonl(atoi(argv[4]));
-    printf("%d\n",ntohl(sel));
-   
-    if(atoi(argv[4]) == 0){
-        printf("enter name to send direct message\n");
-        scanf("%s",send_name);
-        printf("%s\n",send_name);}
-
-    send(sock ,&sel, sizeof(sel),0);
+    int sel;
     send(sock ,name, sizeof(name),0);
-
-    if( atoi(argv[4]) == 0)
-    {   
-        send(sock ,send_name, sizeof(send_name),0);    
-    }
 
 	signal(SIGINT, sigintHandler); 
 	pthread_create(&recvt,NULL,recvmg,&sock);
 	while(1){
-	
-	scanf("%s",msg);
-	send(sock ,msg, strlen(msg) , 0 );
-	for(int i=0;i<500;i++)
-	{
-	  msg[i]=0;	
-	} 
 
-	}
+        printf("Enter the message to be sent: ");
+	    fgets(msg, sizeof(msg), stdin); 
+	    send(sock ,msg, sizeof(msg),0);
+	    
+        printf("Enter '1' for group chat and '0' for direct message: ");
+        scanf("%d%*c",&sel);
+        sel = htonl(sel);
+        //printf("%d",ntohl(sel));
+        send(sock ,&sel, sizeof(sel),0);
+
+        if(ntohl(sel) == 0)
+        {   
+            printf("Enter recipient name");
+            scanf("%[^\n]%*c", send_name);
+            send(sock ,send_name, sizeof(send_name),0);
+        }
+    }
 	pthread_join(recvt,NULL);
 	return 0; 
 } 
